@@ -28,12 +28,10 @@
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
             height: 72px;
-            /* Explicit height to sync with the sticky nav below */
         }
         
         .sticky-nav {
             top: 72px;
-            /* Matches header height perfectly to prevent overlapping */
         }
         
         .answer-btn {
@@ -64,10 +62,8 @@
         }
         
         .part-section {
-            /* Added margin spacing so jumping to parts clears the sticky elements completely */
             scroll-margin-top: 140px;
         }
-        /* Hide scrollbars for aesthetic navigation */
         
         .no-scrollbar::-webkit-scrollbar {
             display: none;
@@ -76,6 +72,42 @@
         .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* Printable Engine Canvas Styles (Landscape A4: 297mm x 210mm) */
+        
+        .pdf-landscape-page {
+            width: 297mm;
+            height: 210mm;
+            padding: 16mm 15mm;
+            background: #ffffff;
+            font-family: Arial, sans-serif;
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .pdf-bubble {
+            width: 22px;
+            height: 22px;
+            border: 1.5px solid #94a3b8;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+        }
+        
+        .pdf-bubble.filled-normal {
+            background-color: #2563eb !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+        
+        .pdf-bubble.filled-fix {
+            background-color: #dc2626 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
         }
     </style>
 </head>
@@ -118,9 +150,9 @@
     </nav>
 
     <!-- MAIN ANSWER SHEET CONTENT -->
-    <div id="pdfContent" class="p-3 max-w-2xl mx-auto space-y-6">
+    <div id="uiViewportContainer" class="p-3 max-w-2xl mx-auto space-y-6">
         <main id="mainContainer" class="space-y-6">
-            <!-- JavaScript targets this area to render rows -->
+            <!-- Interactivity Rows Render Dynamically -->
         </main>
     </div>
 
@@ -183,8 +215,8 @@
 
         let isFixMode = false;
         const modeToggle = document.getElementById('modeToggle');
+        const answersRegistry = {};
 
-        // Toggle Setup
         modeToggle.addEventListener('click', () => {
             isFixMode = !isFixMode;
             if (isFixMode) {
@@ -204,41 +236,38 @@
             });
         }
 
-        // GENERATE SHEET DOM
         function createPart(part) {
             const section = document.createElement('section');
             section.id = part.id;
             section.className = 'part-section bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden';
-
             const colorTheme = part.color === 'blue' ? 'text-blue-600' : 'text-indigo-600';
 
             section.innerHTML = `
-                <!-- TITLE -->
                 <div class="px-5 py-4 bg-gray-50/70 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-base font-bold ${colorTheme}">${part.title}</h2>
-                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200/60 text-gray-600">
-                        Q${part.start} - Q${part.end}
-                    </span>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200/60 text-gray-600">Q${part.start} - Q${part.end}</span>
                 </div>
-                <!-- LIST CONTAINER -->
                 <div class="question-list divide-y divide-gray-100"></div>
             `;
 
             const container = section.querySelector('.question-list');
 
             for (let q = part.start; q <= part.end; q++) {
-                const row = document.createElement('div');
-                row.className = 'question-row flex items-center justify-between px-5 py-3 hover:bg-slate-50/50 transition-colors duration-100';
+                answersRegistry[q] = {
+                    type: null,
+                    value: null
+                };
 
-                // Number label
+                const row = document.createElement('div');
+                row.className = 'question-row flex items-center justify-between px-5 py-3 hover:bg-slate-50/50 transition-colors';
+
                 const label = document.createElement('div');
                 label.className = 'font-bold text-sm text-gray-400 w-8';
                 label.innerText = String(q).padStart(2, '0');
                 row.appendChild(label);
 
-                // Target Grid Wrapper for input alignment
                 const btnWrapper = document.createElement('div');
-                btnWrapper.className = 'flex items-center gap-3 md:gap-5';
+                btnWrapper.className = 'flex items-center gap-3';
 
                 part.options.forEach(opt => {
                     const btn = document.createElement('button');
@@ -251,9 +280,17 @@
                         if (isFixMode) {
                             buttons.forEach(b => b.classList.remove('selected-fix'));
                             btn.classList.add('selected-fix');
+                            answersRegistry[q] = {
+                                type: 'fix',
+                                value: opt
+                            };
                         } else {
                             buttons.forEach(b => b.classList.remove('selected-normal', 'selected-fix'));
                             btn.classList.add('selected-normal');
+                            answersRegistry[q] = {
+                                type: 'normal',
+                                value: opt
+                            };
                         }
                     });
 
@@ -263,63 +300,119 @@
                 row.appendChild(btnWrapper);
                 container.appendChild(row);
             }
-
             return section;
         }
 
-        // RENDER IN DOM
         const main = document.getElementById('mainContainer');
         config.forEach(part => main.appendChild(createPart(part)));
 
-        // EXPORT DOCUMENT HIGH FIDELITY AS MULTIPAGE PDF
-        async function exportPDF() {
-            const pdfElement = document.getElementById('pdfContent');
+        function generateLandscapePageMarkup(startQ, endQ) {
+            const container = document.createElement('div');
+            container.className = 'pdf-landscape-page';
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '0px';
 
-            try {
-                const canvas = await html2canvas(pdfElement, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#f9fafb',
-                    logging: false
-                });
+            let markup = `<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; height: 100%;">`;
 
-                const imgData = canvas.toDataURL('image/png');
-                const {
-                    jsPDF
-                } = window.jspdf;
+            const itemsPerColumn = 25;
+            for (let c = 0; c < 4; c++) {
+                markup += `<div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">`;
 
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
+                const colStart = startQ + (c * itemsPerColumn);
+                const colEnd = colStart + itemsPerColumn - 1;
 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = pdfWidth;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                for (let q = colStart; q <= colEnd; q++) {
+                    if (q > endQ) break;
 
-                let heightLeft = imgHeight;
-                let position = 0;
+                    const partConfig = config.find(p => q >= p.start && q <= p.end);
+                    const options = partConfig ? partConfig.options : ['A', 'B', 'C', 'D'];
+                    const state = answersRegistry[q];
 
-                // Page Render Engine
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pdfHeight;
+                    markup += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5px 0; border-bottom: 1px dotted #cbd5e1;">
+                            <span style="font-size: 11px; font-weight: 800; color: #475569; width: 24px;">${String(q).padStart(3, '0')}</span>
+                            <div style="display: flex; gap: 8px;">
+                    `;
 
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pdfHeight;
+                    options.forEach(opt => {
+                        let bubbleClass = 'pdf-bubble';
+                        if (state && state.value === opt) {
+                            bubbleClass += state.type === 'fix' ? ' filled-fix' : ' filled-normal';
+                        }
+                        markup += `<div class="${bubbleClass}">${opt}</div>`;
+                    });
+
+                    if (options.length === 3) {
+                        markup += `<div style="width: 22px; height: 22px;"></div>`;
+                    }
+
+                    markup += `</div></div>`;
                 }
-
-                pdf.save(`TOEIC_Answers_${new Date().toISOString().slice(0,10)}.pdf`);
-            } catch (error) {
-                console.error("PDF engine crash safely caught: ", error);
+                markup += `</div>`;
             }
+
+            markup += `</div>`;
+            container.innerHTML = markup;
+            return container;
         }
 
-        // SW REGISTRATION
+        // UPDATED: INSTANT EXPORT TO NEW TAB
+        async function exportPDF() {
+            // 1. Immediately open a blank window so mobile systems don't block the popup later
+            const pdfWindow = window.open('', '_blank');
+            if (!pdfWindow) {
+                alert('Please allow popups to view the PDF.');
+                return;
+            }
+            pdfWindow.document.write('<p style="font-family:sans-serif; text-align:center; margin-top:20px;">Generating your PDF matrix... Please wait.</p>');
+
+            const {
+                jsPDF
+            } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pageDefinitions = [{
+                start: 1,
+                end: 100
+            }, {
+                start: 101,
+                end: 200
+            }];
+
+            for (let i = 0; i < pageDefinitions.length; i++) {
+                const def = pageDefinitions[i];
+                const pageDOM = generateLandscapePageMarkup(def.start, def.end);
+                document.body.appendChild(pageDOM);
+
+                try {
+                    const canvas = await html2canvas(pageDOM, {
+                        scale: 2.0, // Optimizes mobile RAM footprint to speed up canvas generation
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+
+                } catch (error) {
+                    console.error("PDF Engine Error:", error);
+                } finally {
+                    document.body.removeChild(pageDOM);
+                }
+            }
+
+            // 2. Convert raw PDF data into a secure object Blob URL and pipe it straight into the open tab
+            const blobString = pdf.output('bloburl');
+            pdfWindow.location.href = blobString;
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
