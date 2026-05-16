@@ -1,184 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOEIC Answer Sheet & Fixer</title>
-    <!-- Tailwind CSS for sleek styling -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>TOEIC Fixer Pro</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon.png" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TOEIC Fixer" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
+        body {
+            padding-bottom: 40px;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+        
+        .glass-header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            height: 72px;
+            /* Explicit height to sync with the sticky nav below */
+        }
+        
+        .sticky-nav {
+            top: 72px;
+            /* Matches header height perfectly to prevent overlapping */
+        }
+        
+        .answer-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .answer-btn:active {
+            transform: scale(0.88);
+        }
+        
         .selected-normal {
-            background-color: #2563eb !important; /* Blue */
+            background: #2563eb !important;
             color: white !important;
             border-color: #2563eb !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
+        
         .selected-fix {
-            background-color: #dc2626 !important; /* Red */
+            background: #dc2626 !important;
             color: white !important;
             border-color: #dc2626 !important;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        
+        .part-section {
+            /* Added margin spacing so jumping to parts clears the sticky elements completely */
+            scroll-margin-top: 140px;
+        }
+        /* Hide scrollbars for aesthetic navigation */
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
-    <link rel="manifest" href="manifest.json">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#2563eb">
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
 
-    <!-- Header & Controls -->
-    <header class="sticky top-0 bg-white shadow-md z-50 p-4 border-b border-gray-200">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">TOEIC Exam Answer Sheet</h1>
-                <p class="text-sm text-gray-500">100 Listening • 100 Reading</p>
-            </div>
-            
-            <!-- Mode Toggle Switch -->
-            <div class="flex items-center bg-gray-100 p-2 rounded-xl border border-gray-200">
-                <span class="mr-3 font-medium text-sm text-gray-700">Mode:</span>
-                <button id="modeToggle" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white shadow-sm transition-all duration-200 uppercase tracking-wider">
-                    Standard Mode
-                </button>
-            </div>
+<body class="bg-gray-50 text-slate-800 font-sans antialiased">
+
+    <!-- HEADER BAR -->
+    <header class="sticky top-0 z-50 glass-header text-white px-4 py-4 shadow-md flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-indigo-200 bg-clip-text text-transparent">
+                TOEIC Fixer Pro
+            </h1>
+            <p class="text-xs text-slate-400 font-medium tracking-wide">COMPREHENSIVE 200 QUESTIONS</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="modeToggle" class="px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-blue-500">
+                Mode: Standard
+            </button>
+            <button onclick="exportPDF()" class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-emerald-500" title="Export Answer Sheet">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Export PDF</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-12 pb-24">
-        
-        <!-- LISTENING SECTION -->
-        <section>
-            <div class="border-b-2 border-blue-600 pb-2 mb-6">
-                <h2 class="text-2xl font-extrabold text-blue-800 uppercase tracking-wide">Listening Section (Q1 - Q100)</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="listening-container"></div>
-        </section>
+    <!-- HORIZONTAL TOP PART SCROLLER -->
+    <nav class="sticky sticky-nav z-40 bg-slate-900 border-b border-slate-800 px-3 py-2.5 overflow-x-auto no-scrollbar shadow-md">
+        <div class="flex gap-2 min-w-max">
+            <button onclick="scrollToPart('p1')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P1</button>
+            <button onclick="scrollToPart('p2')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P2</button>
+            <button onclick="scrollToPart('p3')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P3</button>
+            <button onclick="scrollToPart('p4')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P4</button>
+            <button onclick="scrollToPart('p5')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P5</button>
+            <button onclick="scrollToPart('p6')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P6</button>
+            <button onclick="scrollToPart('p7')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P7</button>
+        </div>
+    </nav>
 
-        <!-- READING SECTION -->
-        <section>
-            <div class="border-b-2 border-emerald-600 pb-2 mb-6">
-                <h2 class="text-2xl font-extrabold text-emerald-800 uppercase tracking-wide">Reading Section (Q101 - Q200)</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="reading-container"></div>
-        </section>
+    <!-- MAIN ANSWER SHEET CONTENT -->
+    <div id="pdfContent" class="p-3 max-w-2xl mx-auto space-y-6">
+        <main id="mainContainer" class="space-y-6">
+            <!-- JavaScript targets this area to render rows -->
+        </main>
+    </div>
 
-    </main>
+    <!-- Script Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
-        // --- Configuration ---
-        const config = {
-            listening: [
-                { part: 1, start: 1, end: 6, options: ['A', 'B', 'C', 'D'] },
-                { part: 2, start: 7, end: 31, options: ['A', 'B', 'C'] },
-                { part: 3, start: 32, end: 70, options: ['A', 'B', 'C', 'D'] },
-                { part: 4, start: 71, end: 100, options: ['A', 'B', 'C', 'D'] }
-            ],
-            reading: [
-                { part: 5, start: 101, end: 130, options: ['A', 'B', 'C', 'D'] },
-                { part: 6, start: 131, end: 146, options: ['A', 'B', 'C', 'D'] },
-                { part: 7, start: 147, end: 200, options: ['A', 'B', 'C', 'D'] }
-            ]
-        };
+        // CONFIG
+        const config = [{
+            id: 'p1',
+            title: 'Part 1: Photographs',
+            start: 1,
+            end: 6,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'blue'
+        }, {
+            id: 'p2',
+            title: 'Part 2: Question-Response',
+            start: 7,
+            end: 31,
+            options: ['A', 'B', 'C'],
+            color: 'blue'
+        }, {
+            id: 'p3',
+            title: 'Part 3: Conversations',
+            start: 32,
+            end: 70,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'blue'
+        }, {
+            id: 'p4',
+            title: 'Part 4: Talks',
+            start: 71,
+            end: 100,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'blue'
+        }, {
+            id: 'p5',
+            title: 'Part 5: Incomplete Sentences',
+            start: 101,
+            end: 130,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'indigo'
+        }, {
+            id: 'p6',
+            title: 'Part 6: Text Completion',
+            start: 131,
+            end: 146,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'indigo'
+        }, {
+            id: 'p7',
+            title: 'Part 7: Reading Comprehension',
+            start: 147,
+            end: 200,
+            options: ['A', 'B', 'C', 'D'],
+            color: 'indigo'
+        }];
 
-        // --- State Management ---
         let isFixMode = false;
-        const modeToggleBtn = document.getElementById('modeToggle');
-        
-        modeToggleBtn.addEventListener('click', () => {
+        const modeToggle = document.getElementById('modeToggle');
+
+        // Toggle Setup
+        modeToggle.addEventListener('click', () => {
             isFixMode = !isFixMode;
             if (isFixMode) {
-                modeToggleBtn.textContent = "Fix Answer Mode";
-                modeToggleBtn.classList.remove('bg-blue-600');
-                modeToggleBtn.classList.add('bg-red-600');
+                modeToggle.innerText = 'Mode: Fix Mode';
+                modeToggle.classList.replace('bg-blue-600', 'bg-red-600');
+                modeToggle.classList.replace('border-blue-500', 'border-red-500');
             } else {
-                modeToggleBtn.textContent = "Standard Mode";
-                modeToggleBtn.classList.remove('bg-red-600');
-                modeToggleBtn.classList.add('bg-blue-600');
+                modeToggle.innerText = 'Mode: Standard';
+                modeToggle.classList.replace('bg-red-600', 'bg-blue-600');
+                modeToggle.classList.replace('border-red-500', 'border-blue-500');
             }
         });
 
-        // --- DOM Generation ---
-        function generateSheet() {
-            const listeningContainer = document.getElementById('listening-container');
-            config.listening.forEach(p => {
-                listeningContainer.appendChild(createPartElement(`Part ${p.part}`, p.start, p.end, p.options));
-            });
-
-            const readingContainer = document.getElementById('reading-container');
-            config.reading.forEach(p => {
-                readingContainer.appendChild(createPartElement(`Part ${p.part}`, p.start, p.end, p.options));
+        function scrollToPart(id) {
+            document.getElementById(id).scrollIntoView({
+                behavior: 'smooth'
             });
         }
 
-        function createPartElement(title, start, end, options) {
-            const card = document.createElement('div');
-            card.className = "bg-white rounded-xl shadow-sm border border-gray-200 p-4";
-            card.innerHTML = `
-                <h3 class="text-lg font-bold text-gray-800 mb-3 border-b pb-1 border-gray-100">${title}</h3>
-                <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1"></div>
-            `;
-            
-            const listContainer = card.querySelector('div');
+        // GENERATE SHEET DOM
+        function createPart(part) {
+            const section = document.createElement('section');
+            section.id = part.id;
+            section.className = 'part-section bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden';
 
-            for (let q = start; q <= end; q++) {
+            const colorTheme = part.color === 'blue' ? 'text-blue-600' : 'text-indigo-600';
+
+            section.innerHTML = `
+                <!-- TITLE -->
+                <div class="px-5 py-4 bg-gray-50/70 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-base font-bold ${colorTheme}">${part.title}</h2>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200/60 text-gray-600">
+                        Q${part.start} - Q${part.end}
+                    </span>
+                </div>
+                <!-- LIST CONTAINER -->
+                <div class="question-list divide-y divide-gray-100"></div>
+            `;
+
+            const container = section.querySelector('.question-list');
+
+            for (let q = part.start; q <= part.end; q++) {
                 const row = document.createElement('div');
-                row.className = "flex items-center justify-between py-1 border-b border-gray-50 last:border-0";
-                
-                const label = document.createElement('span');
-                label.className = "font-semibold text-sm text-gray-500 w-8";
-                label.textContent = q;
+                row.className = 'question-row flex items-center justify-between px-5 py-3 hover:bg-slate-50/50 transition-colors duration-100';
+
+                // Number label
+                const label = document.createElement('div');
+                label.className = 'font-bold text-sm text-gray-400 w-8';
+                label.innerText = String(q).padStart(2, '0');
                 row.appendChild(label);
 
-                const btnGroup = document.createElement('div');
-                btnGroup.className = "flex gap-1.5";
+                // Target Grid Wrapper for input alignment
+                const btnWrapper = document.createElement('div');
+                btnWrapper.className = 'flex items-center gap-3 md:gap-5';
 
-                options.forEach(opt => {
+                part.options.forEach(opt => {
                     const btn = document.createElement('button');
-                    btn.className = "w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition-colors duration-150";
-                    btn.textContent = opt;
+                    btn.className = 'answer-btn border border-gray-300 text-gray-600 bg-white shadow-sm';
+                    btn.innerText = opt;
 
                     btn.addEventListener('click', () => {
+                        const buttons = btnWrapper.querySelectorAll('button');
+
                         if (isFixMode) {
-                            // --- FIX MODE LOGIC ---
-                            // 1. Remove 'red' from any other button in this question row
-                            btnGroup.querySelectorAll('button').forEach(b => {
-                                b.classList.remove('selected-fix');
-                            });
-                            // 2. Add 'red' to the clicked button (even if it's already blue, it will turn red)
+                            buttons.forEach(b => b.classList.remove('selected-fix'));
                             btn.classList.add('selected-fix');
                         } else {
-                            // --- STANDARD MODE LOGIC ---
-                            // Clean slate for this question row (removes both blue and red)
-                            btnGroup.querySelectorAll('button').forEach(b => {
-                                b.classList.remove('selected-normal', 'selected-fix');
-                            });
-                            // Add blue to the clicked button
+                            buttons.forEach(b => b.classList.remove('selected-normal', 'selected-fix'));
                             btn.classList.add('selected-normal');
                         }
                     });
 
-                    btnGroup.appendChild(btn);
+                    btnWrapper.appendChild(btn);
                 });
 
-                row.appendChild(btnGroup);
-                listContainer.appendChild(row);
+                row.appendChild(btnWrapper);
+                container.appendChild(row);
             }
 
-            return card;
+            return section;
         }
 
-        generateSheet();
-    </script>
+        // RENDER IN DOM
+        const main = document.getElementById('mainContainer');
+        config.forEach(part => main.appendChild(createPart(part)));
 
-    <!-- 2. Register the Service Worker -->
-    <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker Registered!', reg.scope))
-          .catch(err => console.log('Service Worker registration failed: ', err));
-      });
-    }
-  </script>
+        // EXPORT DOCUMENT HIGH FIDELITY AS MULTIPAGE PDF
+        async function exportPDF() {
+            const pdfElement = document.getElementById('pdfContent');
+
+            try {
+                const canvas = await html2canvas(pdfElement, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#f9fafb',
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const {
+                    jsPDF
+                } = window.jspdf;
+
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Page Render Engine
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+
+                pdf.save(`TOEIC_Answers_${new Date().toISOString().slice(0,10)}.pdf`);
+            } catch (error) {
+                console.error("PDF engine crash safely caught: ", error);
+            }
+        }
+
+        // SW REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+            });
+        }
+    </script>
 </body>
+
 </html>
