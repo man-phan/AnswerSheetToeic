@@ -1,0 +1,21 @@
+{
+    "name": "TOEIC Answer Sheet & Fixer",
+    "short_name": "TOEIC Fixer",
+    "description": "An interactive digital answer sheet for TOEIC practice with standard and correction modes.",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#f9fafb",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-preferred",
+    "icons": [{
+            "src": "icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
