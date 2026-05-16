@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOEIC Answer Sheet & Fixer</title>
+    <!-- Tailwind CSS for sleek styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .selected-normal {
+            background-color: #2563eb !important; /* Blue */
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+        .selected-fix {
+            background-color: #dc2626 !important; /* Red */
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <!-- Header & Controls -->
+    <header class="sticky top-0 bg-white shadow-md z-50 p-4 border-b border-gray-200">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">TOEIC Exam Answer Sheet</h1>
+                <p class="text-sm text-gray-500">100 Listening • 100 Reading</p>
+            </div>
+            
+            <!-- Mode Toggle Switch -->
+            <div class="flex items-center bg-gray-100 p-2 rounded-xl border border-gray-200">
+                <span class="mr-3 font-medium text-sm text-gray-700">Mode:</span>
+                <button id="modeToggle" class="px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white shadow-sm transition-all duration-200 uppercase tracking-wider">
+                    Standard Mode
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto p-4 md:p-6 space-y-12 pb-24">
+        
+        <!-- LISTENING SECTION -->
+        <section>
+            <div class="border-b-2 border-blue-600 pb-2 mb-6">
+                <h2 class="text-2xl font-extrabold text-blue-800 uppercase tracking-wide">Listening Section (Q1 - Q100)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="listening-container"></div>
+        </section>
+
+        <!-- READING SECTION -->
+        <section>
+            <div class="border-b-2 border-emerald-600 pb-2 mb-6">
+                <h2 class="text-2xl font-extrabold text-emerald-800 uppercase tracking-wide">Reading Section (Q101 - Q200)</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="reading-container"></div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Configuration ---
+        const config = {
+            listening: [
+                { part: 1, start: 1, end: 6, options: ['A', 'B', 'C', 'D'] },
+                { part: 2, start: 7, end: 31, options: ['A', 'B', 'C'] },
+                { part: 3, start: 32, end: 70, options: ['A', 'B', 'C', 'D'] },
+                { part: 4, start: 71, end: 100, options: ['A', 'B', 'C', 'D'] }
+            ],
+            reading: [
+                { part: 5, start: 101, end: 130, options: ['A', 'B', 'C', 'D'] },
+                { part: 6, start: 131, end: 146, options: ['A', 'B', 'C', 'D'] },
+                { part: 7, start: 147, end: 200, options: ['A', 'B', 'C', 'D'] }
+            ]
+        };
+
+        // --- State Management ---
+        let isFixMode = false;
+        const modeToggleBtn = document.getElementById('modeToggle');
+        
+        modeToggleBtn.addEventListener('click', () => {
+            isFixMode = !isFixMode;
+            if (isFixMode) {
+                modeToggleBtn.textContent = "Fix Answer Mode";
+                modeToggleBtn.classList.remove('bg-blue-600');
+                modeToggleBtn.classList.add('bg-red-600');
+            } else {
+                modeToggleBtn.textContent = "Standard Mode";
+                modeToggleBtn.classList.remove('bg-red-600');
+                modeToggleBtn.classList.add('bg-blue-600');
+            }
+        });
+
+        // --- DOM Generation ---
+        function generateSheet() {
+            const listeningContainer = document.getElementById('listening-container');
+            config.listening.forEach(p => {
+                listeningContainer.appendChild(createPartElement(`Part ${p.part}`, p.start, p.end, p.options));
+            });
+
+            const readingContainer = document.getElementById('reading-container');
+            config.reading.forEach(p => {
+                readingContainer.appendChild(createPartElement(`Part ${p.part}`, p.start, p.end, p.options));
+            });
+        }
+
+        function createPartElement(title, start, end, options) {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-xl shadow-sm border border-gray-200 p-4";
+            card.innerHTML = `
+                <h3 class="text-lg font-bold text-gray-800 mb-3 border-b pb-1 border-gray-100">${title}</h3>
+                <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1"></div>
+            `;
+            
+            const listContainer = card.querySelector('div');
+
+            for (let q = start; q <= end; q++) {
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between py-1 border-b border-gray-50 last:border-0";
+                
+                const label = document.createElement('span');
+                label.className = "font-semibold text-sm text-gray-500 w-8";
+                label.textContent = q;
+                row.appendChild(label);
+
+                const btnGroup = document.createElement('div');
+                btnGroup.className = "flex gap-1.5";
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:outline-none transition-colors duration-150";
+                    btn.textContent = opt;
+
+                    btn.addEventListener('click', () => {
+                        if (isFixMode) {
+                            // --- FIX MODE LOGIC ---
+                            // 1. Remove 'red' from any other button in this question row
+                            btnGroup.querySelectorAll('button').forEach(b => {
+                                b.classList.remove('selected-fix');
+                            });
+                            // 2. Add 'red' to the clicked button (even if it's already blue, it will turn red)
+                            btn.classList.add('selected-fix');
+                        } else {
+                            // --- STANDARD MODE LOGIC ---
+                            // Clean slate for this question row (removes both blue and red)
+                            btnGroup.querySelectorAll('button').forEach(b => {
+                                b.classList.remove('selected-normal', 'selected-fix');
+                            });
+                            // Add blue to the clicked button
+                            btn.classList.add('selected-normal');
+                        }
+                    });
+
+                    btnGroup.appendChild(btn);
+                });
+
+                row.appendChild(btnGroup);
+                listContainer.appendChild(row);
+            }
+
+            return card;
+        }
+
+        generateSheet();
+    </script>
+</body>
+</html>
