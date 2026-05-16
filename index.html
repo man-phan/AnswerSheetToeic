@@ -23,15 +23,19 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain;
         }
+        /* FIXED: iOS Safe Area / Notch Protection for Header */
         
         .glass-header {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
-            height: 72px;
+            /* Accounts for the top notch dynamically + adds inner padding */
+            padding-top: calc(env(safe-area-inset-top) + 12px);
+            padding-bottom: 12px;
         }
+        /* FIXED: Dynamic offset for navigation scroller below the safe header */
         
         .sticky-nav {
-            top: 72px;
+            top: calc(env(safe-area-inset-top) + 68px);
         }
         
         .answer-btn {
@@ -62,7 +66,7 @@
         }
         
         .part-section {
-            scroll-margin-top: 140px;
+            scroll-margin-top: calc(env(safe-area-inset-top) + 140px);
         }
         
         .no-scrollbar::-webkit-scrollbar {
@@ -114,8 +118,8 @@
 
 <body class="bg-gray-50 text-slate-800 font-sans antialiased">
 
-    <!-- HEADER BAR -->
-    <header class="sticky top-0 z-50 glass-header text-white px-4 py-4 shadow-md flex items-center justify-between">
+    <!-- HEADER BAR WITH NOTCH PADDING -->
+    <header class="sticky top-0 z-50 glass-header text-white px-4 shadow-md flex items-center justify-between">
         <div>
             <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-indigo-200 bg-clip-text text-transparent">
                 TOEIC Fixer Pro
@@ -124,10 +128,10 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <button id="modeToggle" class="px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-blue-500">
+            <button id="modeToggle" class="px-3.5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-blue-500">
                 Mode: Standard
             </button>
-            <button onclick="exportPDF()" class="flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-emerald-500" title="Export Answer Sheet">
+            <button onclick="exportPDF()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-emerald-500" title="Export Answer Sheet">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
@@ -357,9 +361,7 @@
             return container;
         }
 
-        // UPDATED: INSTANT EXPORT TO NEW TAB
         async function exportPDF() {
-            // 1. Immediately open a blank window so mobile systems don't block the popup later
             const pdfWindow = window.open('', '_blank');
             if (!pdfWindow) {
                 alert('Please allow popups to view the PDF.');
@@ -391,7 +393,7 @@
 
                 try {
                     const canvas = await html2canvas(pageDOM, {
-                        scale: 2.0, // Optimizes mobile RAM footprint to speed up canvas generation
+                        scale: 2.0,
                         useCORS: true,
                         backgroundColor: '#ffffff',
                         logging: false
@@ -408,7 +410,6 @@
                 }
             }
 
-            // 2. Convert raw PDF data into a secure object Blob URL and pipe it straight into the open tab
             const blobString = pdf.output('bloburl');
             pdfWindow.location.href = blobString;
         }
