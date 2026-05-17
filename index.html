@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>TOEIC Fixer Pro</title>
 
-    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icon.png" />
     <meta name="theme-color" content="#0f172a" />
@@ -14,7 +13,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TOEIC Fixer" />
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -23,19 +21,15 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain;
         }
-        /* FIXED: iOS Safe Area / Notch Protection for Header */
+        /* iOS Safe Area / Notch Protection for Header (Top, Left, and Right) */
         
         .glass-header {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
-            /* Accounts for the top notch dynamically + adds inner padding */
             padding-top: calc(env(safe-area-inset-top) + 12px);
             padding-bottom: 12px;
-        }
-        /* FIXED: Dynamic offset for navigation scroller below the safe header */
-        
-        .sticky-nav {
-            top: calc(env(safe-area-inset-top) + 68px);
+            padding-left: calc(env(safe-area-inset-left) + 16px);
+            padding-right: calc(env(safe-area-inset-right) + 16px);
         }
         
         .answer-btn {
@@ -50,6 +44,7 @@
         .answer-btn:active {
             transform: scale(0.88);
         }
+        /* Independent Coexistence State Styling */
         
         .selected-normal {
             background: #2563eb !important;
@@ -64,9 +59,17 @@
             border-color: #dc2626 !important;
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
+        /* Split-Gradient indicator for identical choices */
+        
+        .selected-both {
+            background: linear-gradient(135deg, #2563eb 50%, #dc2626 50%) !important;
+            color: white !important;
+            border-color: #1e40af !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
         
         .part-section {
-            scroll-margin-top: calc(env(safe-area-inset-top) + 140px);
+            scroll-margin-top: calc(env(safe-area-inset-top) + 130px);
         }
         
         .no-scrollbar::-webkit-scrollbar {
@@ -113,54 +116,70 @@
             color: white !important;
             border-color: #dc2626 !important;
         }
+        
+        .pdf-bubble.filled-both {
+            background: linear-gradient(135deg, #2563eb 50%, #dc2626 50%) !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-slate-800 font-sans antialiased">
 
-    <!-- HEADER BAR WITH NOTCH PADDING -->
-    <header class="sticky top-0 z-50 glass-header text-white px-4 shadow-md flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-indigo-200 bg-clip-text text-transparent">
-                TOEIC Fixer Pro
-            </h1>
-            <p class="text-xs text-slate-400 font-medium tracking-wide">COMPREHENSIVE 200 QUESTIONS</p>
-        </div>
+    <div class="sticky top-0 z-50 w-full shadow-md">
 
-        <div class="flex items-center gap-2">
-            <button id="modeToggle" class="px-3.5 py-2 rounded-full bg-blue-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-blue-500">
-                Mode: Standard
-            </button>
-            <button onclick="exportPDF()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all duration-150 border border-emerald-500" title="Export Answer Sheet">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span>Export PDF</span>
-            </button>
-        </div>
-    </header>
+        <header class="glass-header text-white flex items-center justify-between gap-2 border-b border-slate-800/40">
+            <div class="min-w-0 flex-shrink pr-1">
+                <h1 class="text-base sm:text-xl font-black tracking-tight bg-gradient-to-r from-blue-400 to-indigo-200 bg-clip-text text-transparent truncate">
+                    TOEIC Fixer Pro
+                </h1>
+                <p class="text-[9px] sm:text-xs text-slate-400 font-medium tracking-wide truncate">200 QUESTIONS</p>
+            </div>
 
-    <!-- HORIZONTAL TOP PART SCROLLER -->
-    <nav class="sticky sticky-nav z-40 bg-slate-900 border-b border-slate-800 px-3 py-2.5 overflow-x-auto no-scrollbar shadow-md">
-        <div class="flex gap-2 min-w-max">
-            <button onclick="scrollToPart('p1')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P1</button>
-            <button onclick="scrollToPart('p2')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P2</button>
-            <button onclick="scrollToPart('p3')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P3</button>
-            <button onclick="scrollToPart('p4')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P4</button>
-            <button onclick="scrollToPart('p5')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P5</button>
-            <button onclick="scrollToPart('p6')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P6</button>
-            <button onclick="scrollToPart('p7')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P7</button>
-        </div>
-    </nav>
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
 
-    <!-- MAIN ANSWER SHEET CONTENT -->
+                <div id="modeToggle" class="relative flex items-center bg-slate-900 p-0.5 rounded-full border border-slate-800 w-[110px] h-8 cursor-pointer select-none flex-shrink-0 transition-colors duration-200" title="Switch Mode">
+                    <div id="toggleBg" class="absolute top-0.5 left-0.5 bottom-0.5 w-[52px] bg-blue-600 rounded-full transition-all duration-200 cubic-bezier(0.4, 0, 0.2, 1)"></div>
+                    <div class="relative flex w-full h-full text-center text-[10px] font-black tracking-wider uppercase">
+                        <span id="labelStd" class="flex-1 flex items-center justify-center text-white transition-colors duration-150">Std</span>
+                        <span id="labelFix" class="flex-1 flex items-center justify-center text-slate-500 transition-colors duration-150">Fix</span>
+                    </div>
+                </div>
+
+                <button onclick="exportPDF()" class="flex items-center gap-1 px-2.5 h-8 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-md active:scale-95 transition-all duration-150 border border-emerald-500 whitespace-nowrap" title="Export Answer Sheet">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>PDF</span>
+                </button>
+
+                <button onclick="clearAnswers()" class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-red-400 border border-slate-700 active:scale-95 transition-all duration-150" title="Clear All Answers">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <nav class="bg-slate-900 border-b border-slate-800 px-3 py-2.5 overflow-x-auto no-scrollbar">
+            <div class="flex gap-2 min-w-max">
+                <button onclick="scrollToPart('p1')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P1</button>
+                <button onclick="scrollToPart('p2')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P2</button>
+                <button onclick="scrollToPart('p3')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P3</button>
+                <button onclick="scrollToPart('p4')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P4</button>
+                <button onclick="scrollToPart('p5')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P5</button>
+                <button onclick="scrollToPart('p6')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P6</button>
+                <button onclick="scrollToPart('p7')" class="px-3.5 py-1.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">P7</button>
+            </div>
+        </nav>
+    </div>
+
     <div id="uiViewportContainer" class="p-3 max-w-2xl mx-auto space-y-6">
         <main id="mainContainer" class="space-y-6">
-            <!-- Interactivity Rows Render Dynamically -->
         </main>
     </div>
 
-    <!-- Script Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -219,24 +238,52 @@
 
         let isFixMode = false;
         const modeToggle = document.getElementById('modeToggle');
+        const toggleBg = document.getElementById('toggleBg');
+        const labelStd = document.getElementById('labelStd');
+        const labelFix = document.getElementById('labelFix');
         const answersRegistry = {};
 
+        // Interactive Toggle Switch Engine
         modeToggle.addEventListener('click', () => {
             isFixMode = !isFixMode;
             if (isFixMode) {
-                modeToggle.innerText = 'Mode: Fix Mode';
-                modeToggle.classList.replace('bg-blue-600', 'bg-red-600');
-                modeToggle.classList.replace('border-blue-500', 'border-red-500');
+                toggleBg.style.transform = 'translateX(52px)';
+                toggleBg.classList.replace('bg-blue-600', 'bg-red-600');
+                labelFix.classList.replace('text-slate-500', 'text-white');
+                labelStd.classList.replace('text-white', 'text-slate-500');
             } else {
-                modeToggle.innerText = 'Mode: Standard';
-                modeToggle.classList.replace('bg-red-600', 'bg-blue-600');
-                modeToggle.classList.replace('border-red-500', 'border-blue-500');
+                toggleBg.style.transform = 'translateX(0px)';
+                toggleBg.classList.replace('bg-red-600', 'bg-blue-600');
+                labelStd.classList.replace('text-slate-500', 'text-white');
+                labelFix.classList.replace('text-white', 'text-slate-500');
             }
         });
 
         function scrollToPart(id) {
             document.getElementById(id).scrollIntoView({
                 behavior: 'smooth'
+            });
+        }
+
+        // Shared dynamic style manager for coexistence configurations
+        function syncRowButtonUI(btnWrapper, q) {
+            const buttons = btnWrapper.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const opt = btn.innerText;
+
+                // Reset states
+                btn.classList.remove('selected-normal', 'selected-fix', 'selected-both');
+
+                const matchesNormal = answersRegistry[q].normal === opt;
+                const matchesFix = answersRegistry[q].fix === opt;
+
+                if (matchesNormal && matchesFix) {
+                    btn.classList.add('selected-both');
+                } else if (matchesNormal) {
+                    btn.classList.add('selected-normal');
+                } else if (matchesFix) {
+                    btn.classList.add('selected-fix');
+                }
             });
         }
 
@@ -257,9 +304,10 @@
             const container = section.querySelector('.question-list');
 
             for (let q = part.start; q <= part.end; q++) {
+                // Expanded Registry data structure configuration
                 answersRegistry[q] = {
-                    type: null,
-                    value: null
+                    normal: null,
+                    fix: null
                 };
 
                 const row = document.createElement('div');
@@ -279,23 +327,13 @@
                     btn.innerText = opt;
 
                     btn.addEventListener('click', () => {
-                        const buttons = btnWrapper.querySelectorAll('button');
-
                         if (isFixMode) {
-                            buttons.forEach(b => b.classList.remove('selected-fix'));
-                            btn.classList.add('selected-fix');
-                            answersRegistry[q] = {
-                                type: 'fix',
-                                value: opt
-                            };
+                            // Toggle tracking execution structure
+                            answersRegistry[q].fix = (answersRegistry[q].fix === opt) ? null : opt;
                         } else {
-                            buttons.forEach(b => b.classList.remove('selected-normal', 'selected-fix'));
-                            btn.classList.add('selected-normal');
-                            answersRegistry[q] = {
-                                type: 'normal',
-                                value: opt
-                            };
+                            answersRegistry[q].normal = (answersRegistry[q].normal === opt) ? null : opt;
                         }
+                        syncRowButtonUI(btnWrapper, q);
                     });
 
                     btnWrapper.appendChild(btn);
@@ -309,6 +347,21 @@
 
         const main = document.getElementById('mainContainer');
         config.forEach(part => main.appendChild(createPart(part)));
+
+        // Interactive Clear System
+        function clearAnswers() {
+            if (confirm('Are you sure you want to clear all marked answers?')) {
+                for (const q in answersRegistry) {
+                    answersRegistry[q] = {
+                        normal: null,
+                        fix: null
+                    };
+                }
+                document.querySelectorAll('.answer-btn').forEach(btn => {
+                    btn.classList.remove('selected-normal', 'selected-fix', 'selected-both');
+                });
+            }
+        }
 
         function generateLandscapePageMarkup(startQ, endQ) {
             const container = document.createElement('div');
@@ -341,8 +394,17 @@
 
                     options.forEach(opt => {
                         let bubbleClass = 'pdf-bubble';
-                        if (state && state.value === opt) {
-                            bubbleClass += state.type === 'fix' ? ' filled-fix' : ' filled-normal';
+                        if (state) {
+                            const hasNormal = state.normal === opt;
+                            const hasFix = state.fix === opt;
+
+                            if (hasNormal && hasFix) {
+                                bubbleClass += ' filled-both';
+                            } else if (hasNormal) {
+                                bubbleClass += ' filled-normal';
+                            } else if (hasFix) {
+                                bubbleClass += ' filled-fix';
+                            }
                         }
                         markup += `<div class="${bubbleClass}">${opt}</div>`;
                     });
