@@ -241,7 +241,9 @@
         const toggleBg = document.getElementById('toggleBg');
         const labelStd = document.getElementById('labelStd');
         const labelFix = document.getElementById('labelFix');
-        const answersRegistry = {};
+        
+        // Load Registry data from localStorage with a fallback
+        const answersRegistry = JSON.parse(localStorage.getItem('answersRegistry')) || {};
 
         // Interactive Toggle Switch Engine
         modeToggle.addEventListener('click', () => {
@@ -267,15 +269,15 @@
 
         // Shared dynamic style manager for coexistence configurations
         function syncRowButtonUI(btnWrapper, q) {
-            const buttons = btnWrapper.querySelectorAll('button');
+            const buttons = btnWrapper.querySelectorAll('.answer-btn');
             buttons.forEach(btn => {
                 const opt = btn.innerText;
 
                 // Reset states
                 btn.classList.remove('selected-normal', 'selected-fix', 'selected-both');
 
-                const matchesNormal = answersRegistry[q].normal === opt;
-                const matchesFix = answersRegistry[q].fix === opt;
+                const matchesNormal = answersRegistry[q]?.normal === opt;
+                const matchesFix = answersRegistry[q]?.fix === opt;
 
                 if (matchesNormal && matchesFix) {
                     btn.classList.add('selected-both');
@@ -304,19 +306,48 @@
             const container = section.querySelector('.question-list');
 
             for (let q = part.start; q <= part.end; q++) {
-                // Expanded Registry data structure configuration
-                answersRegistry[q] = {
-                    normal: null,
-                    fix: null
-                };
+                // Initialize default object values safely if missing from cache
+                if (!answersRegistry[q]) {
+                    answersRegistry[q] = {
+                        normal: null,
+                        fix: null,
+                        flag: false
+                    };
+                }
 
                 const row = document.createElement('div');
                 row.className = 'question-row flex items-center justify-between px-5 py-3 hover:bg-slate-50/50 transition-colors';
 
+                // Adjusted layout container: Number comes first, Flag button sits immediately to its right.
+                const labelWrapper = document.createElement('div');
+                labelWrapper.className = 'flex items-center gap-2 w-16';
+
                 const label = document.createElement('div');
-                label.className = 'font-bold text-sm text-gray-400 w-8';
+                label.className = 'font-bold text-sm text-gray-400';
                 label.innerText = String(q).padStart(2, '0');
-                row.appendChild(label);
+
+                const flagBtn = document.createElement('button');
+                const flagColor = answersRegistry[q].flag ? 'text-yellow-500' : 'text-gray-300';
+                flagBtn.className = `flag-btn ${flagColor} hover:text-yellow-500 transition-colors focus:outline-none`;
+                flagBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M4 2v20h2v-8h13l-2-4 2-4H6V2H4z"/>
+                    </svg>
+                `;
+                
+                flagBtn.addEventListener('click', () => {
+                    answersRegistry[q].flag = !answersRegistry[q].flag;
+                    if (answersRegistry[q].flag) {
+                        flagBtn.classList.replace('text-gray-300', 'text-yellow-500');
+                    } else {
+                        flagBtn.classList.replace('text-yellow-500', 'text-gray-300');
+                    }
+                    localStorage.setItem('answersRegistry', JSON.stringify(answersRegistry));
+                });
+                
+                labelWrapper.appendChild(label);
+                labelWrapper.appendChild(flagBtn);
+                row.appendChild(labelWrapper);
 
                 const btnWrapper = document.createElement('div');
                 btnWrapper.className = 'flex items-center gap-3';
@@ -334,12 +365,14 @@
                             answersRegistry[q].normal = (answersRegistry[q].normal === opt) ? null : opt;
                         }
                         syncRowButtonUI(btnWrapper, q);
+                        localStorage.setItem('answersRegistry', JSON.stringify(answersRegistry));
                     });
 
                     btnWrapper.appendChild(btn);
                 });
 
                 row.appendChild(btnWrapper);
+                syncRowButtonUI(btnWrapper, q); // Sync choice states matching loaded configuration
                 container.appendChild(row);
             }
             return section;
@@ -354,12 +387,18 @@
                 for (const q in answersRegistry) {
                     answersRegistry[q] = {
                         normal: null,
-                        fix: null
+                        fix: null,
+                        flag: false
                     };
                 }
                 document.querySelectorAll('.answer-btn').forEach(btn => {
                     btn.classList.remove('selected-normal', 'selected-fix', 'selected-both');
                 });
+                document.querySelectorAll('.flag-btn').forEach(btn => {
+                    btn.classList.remove('text-yellow-500');
+                    btn.classList.add('text-gray-300');
+                });
+                localStorage.removeItem('answersRegistry');
             }
         }
 
@@ -385,10 +424,11 @@
                     const partConfig = config.find(p => q >= p.start && q <= p.end);
                     const options = partConfig ? partConfig.options : ['A', 'B', 'C', 'D'];
                     const state = answersRegistry[q];
+                    const numColor = state?.flag ? '#eab308' : '#475569';
 
                     markup += `
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.5px 0; border-bottom: 1px dotted #cbd5e1;">
-                            <span style="font-size: 11px; font-weight: 800; color: #475569; width: 24px;">${String(q).padStart(3, '0')}</span>
+                            <span style="font-size: 11px; font-weight: 800; color: ${numColor}; width: 24px;">${String(q).padStart(3, '0')}</span>
                             <div style="display: flex; gap: 8px;">
                     `;
 
